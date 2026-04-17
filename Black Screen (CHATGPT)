@@ -1,0 +1,95 @@
+--// SETTINGS
+local toggleKey = Enum.KeyCode.K -- default key (changeable in GUI)
+
+--// SERVICES
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+--// STATE
+local enabled = false
+
+--// BLACK SCREEN GUI
+local blackGui = Instance.new("ScreenGui")
+blackGui.Name = "BlackScreenGui"
+blackGui.IgnoreGuiInset = true
+blackGui.ResetOnSpawn = false
+blackGui.Enabled = false
+blackGui.Parent = playerGui
+
+local blackFrame = Instance.new("Frame")
+blackFrame.Size = UDim2.new(1,0,1,0)
+blackFrame.BackgroundColor3 = Color3.new(0,0,0)
+blackFrame.BorderSizePixel = 0
+blackFrame.Parent = blackGui
+
+--// MAIN CONTROL GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "ToggleGui"
+gui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 120)
+frame.Position = UDim2.new(0, 20, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Parent = gui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(1, -10, 0, 40)
+toggleButton.Position = UDim2.new(0, 5, 0, 5)
+toggleButton.Text = "Toggle: OFF"
+toggleButton.Parent = frame
+
+local keybindBox = Instance.new("TextBox")
+keybindBox.Size = UDim2.new(1, -10, 0, 40)
+keybindBox.Position = UDim2.new(0, 5, 0, 55)
+keybindBox.PlaceholderText = "Enter Key (e.g. K)"
+keybindBox.Text = "K"
+keybindBox.Parent = frame
+
+--// FUNCTION TO TOGGLE
+local function setState(state)
+	enabled = state
+	blackGui.Enabled = enabled
+
+	-- disable 3D rendering
+	if enabled then
+		game:GetService("RunService"):Set3dRenderingEnabled(false)
+	else
+		game:GetService("RunService"):Set3dRenderingEnabled(true)
+	end
+
+	toggleButton.Text = "Toggle: " .. (enabled and "ON" or "OFF")
+end
+
+--// BUTTON CLICK
+toggleButton.MouseButton1Click:Connect(function()
+	setState(not enabled)
+end)
+
+--// KEYBIND INPUT
+keybindBox.FocusLost:Connect(function()
+	local text = keybindBox.Text:upper()
+	local success, key = pcall(function()
+		return Enum.KeyCode[text]
+	end)
+
+	if success and key then
+		toggleKey = key
+		keybindBox.Text = key.Name
+	else
+		keybindBox.Text = toggleKey.Name
+	end
+end)
+
+--// KEY PRESS LISTENER
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	
+	if input.KeyCode == toggleKey then
+		setState(not enabled)
+	end
+end)
